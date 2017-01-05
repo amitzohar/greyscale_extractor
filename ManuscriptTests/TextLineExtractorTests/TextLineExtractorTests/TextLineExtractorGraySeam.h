@@ -1,6 +1,6 @@
 
-#ifndef _TextLineExtractorBinarySeam_H 
-#define _TextLineExtractorBinarySeam_H 
+#ifndef _TextLineExtractorGraySeam_H 
+#define _TextLineExtractorGraySeam_H 
 
 
 #include <opencv/cv.h>
@@ -9,7 +9,7 @@
 #include "TextLineExtractor.h"
 
 
-class TextLineExtractorBinarySeam : public TextLineExtractor {
+class TextLineExtractorGraySeam : public TextLineExtractor {
 	/* Class variables declaration */
 	int theRows;
 	int _border;
@@ -17,8 +17,8 @@ class TextLineExtractorBinarySeam : public TextLineExtractor {
 
 public:
 	//Constructor
-	TextLineExtractorBinarySeam(int rows);
-	~TextLineExtractorBinarySeam();
+	TextLineExtractorGraySeam(int rows);
+	~TextLineExtractorGraySeam();
 
 	//Overridden methods
 	void extract(std::vector<TextLine*>& text_lies);
@@ -30,11 +30,11 @@ private:
 	vector<cv::Point> getSeam(Mat energy_map, cv::Point init);
 	vector<cv::Point> getNextSeam(Mat energy_map);
 	vector<ConnectedComponent*> getSeamComponents(vector<Point> seam, vector<ConnectedComponent*> &component_list);
-	void removeTextLineFromEnergeyMap(Mat energy_map, TextLine& text_line);
+	void removeTextLineFromEnergyMap(Mat energy_map, TextLine& text_line);
 	int getMinRow(Mat EnergyMap);
 	void drawDisplay(vector<Point> seam);
-	float minValueOfThreeRows(cv::Mat img, int row, int col){
-		return min(img.at<float>(row - 1, col), min(img.at<float>(row, col), img.at<float>(row + 1, col)));
+	float minValueOfThreeRows(cv::Mat img, int row, int col, vector<float> w){
+		return min(w[0]*img.at<float>(row - 1, col), min(w[1]*img.at<float>(row, col), w[2]*img.at<float>(row + 1, col)));
 	}
 };
 

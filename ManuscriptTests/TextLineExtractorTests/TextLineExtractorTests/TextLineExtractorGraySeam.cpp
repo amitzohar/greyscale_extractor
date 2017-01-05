@@ -19,18 +19,18 @@ struct {
 
 
 /**
-* TextLineExtractorBinarySeam Constructor
+* TextLineExtractorGraySeam Constructor
 * Input:
 *	rows- amount of rows to extract.
 */
-TextLineExtractorBinarySeam::TextLineExtractorBinarySeam(int rows){
+TextLineExtractorGraySeam::TextLineExtractorGraySeam(int rows){
 	theRows = rows;
 }
 
 /**
-* TextLineExtractorBinarySeam Destructor
+* TextLineExtractorGraySeam Destructor
 */
-TextLineExtractorBinarySeam::~TextLineExtractorBinarySeam(){
+TextLineExtractorGraySeam::~TextLineExtractorGraySeam(){
 }
 
 /**
@@ -41,7 +41,7 @@ TextLineExtractorBinarySeam::~TextLineExtractorBinarySeam(){
 *	Must first call setImage with binary image.
 */
 
-void TextLineExtractorBinarySeam::extract(vector<TextLine*>& text_lines){
+void TextLineExtractorGraySeam::extract(vector<TextLine*>& text_lines){
 	ComponentExtractorBinary component_extractor;
 	vector<ConnectedComponent*> component_list;
 
@@ -59,27 +59,27 @@ void TextLineExtractorBinarySeam::extract(vector<TextLine*>& text_lines){
 	Mat energy_map = getEnergyMapFromDistance(dist_map->getMat());
 	normalize(energy_map, vis, 0, 1, NORM_MINMAX, CV_32F);
 	ImageTools::display(" Energy Map ", vis);
-	return;
-
-	do {
+	//return;
+	
+	for (int i = 0; i <= theRows; i++) {
 		vector<cv::Point> seam = getNextSeam(energy_map);
-		//drawDisplay(seam);
-		//waitKey(0);
+		drawDisplay(seam);
+		waitKey(0);
 		vector<ConnectedComponent*> seam_components = getSeamComponents(seam, component_list);
-		cout << "Componet List: " << component_list.size() << " Seam Components: " << seam_components.size() << endl;
+		cout << "Component List: " << component_list.size() << " Seam Components: " << seam_components.size() << endl;
 		if (seam_components.size() > 0){
 			TextLine* text_line = new TextLine(_image->getMat());
 			text_line->setLineBoundary(seam_components);
 			text_lines.push_back(text_line);
 			stdext::subtract(component_list, seam_components);
-			removeTextLineFromEnergeyMap(energy_map, *text_line);
+			removeTextLineFromEnergyMap(energy_map, *text_line);
 			normalize(energy_map, vis, 0, 1, NORM_MINMAX, CV_32F);
 			//ImageTools::displayFresh(" Energy Map ", vis);
 		}
-	} while (component_list.size() > 0);
+	}
 }
 
-vector<cv::Point> TextLineExtractorBinarySeam::getNextSeam(Mat energy_map){
+vector<cv::Point> TextLineExtractorGraySeam::getNextSeam(Mat energy_map){
 	Point min_pt;
 	double min_val, max_val;
 	//cout << "Col: " << energy_map.col(energy_map.cols - 2) << endl ;
@@ -107,7 +107,7 @@ vector<cv::Point> TextLineExtractorBinarySeam::getNextSeam(Mat energy_map){
 */
 
 
-vector<ConnectedComponent*> TextLineExtractorBinarySeam::getSeamComponents(vector<Point> seam, vector<ConnectedComponent*> &component_list){
+vector<ConnectedComponent*> TextLineExtractorGraySeam::getSeamComponents(vector<Point> seam, vector<ConnectedComponent*> &component_list){
 	vector<ConnectedComponent*> seam_components;
 	vector<ConnectedComponent*> rect_components;
 	Rect seam_rect = boundingRect(seam);
@@ -136,7 +136,7 @@ vector<ConnectedComponent*> TextLineExtractorBinarySeam::getSeamComponents(vecto
 
 
 
-int TextLineExtractorBinarySeam::getMinRow(Mat energy_map, int row, int col, int range){
+int TextLineExtractorGraySeam::getMinRow(Mat energy_map, int row, int col, int range){
 	float min_val = energy_map.at<float>(row, col);
 	int min_row = row;
 	for (int i = -range; i <= range ; i++)
@@ -151,7 +151,7 @@ int TextLineExtractorBinarySeam::getMinRow(Mat energy_map, int row, int col, int
 *
 */
 
-vector<Point> TextLineExtractorBinarySeam::getSeam(Mat energy_map, Point start){
+vector<Point> TextLineExtractorGraySeam::getSeam(Mat energy_map, Point start){
 	vector<Point> seam;
 	int row = start.y;
 	seam.push_back(start);
@@ -189,26 +189,61 @@ Mat TextLineExtractorBinarySeam::getEnergyMapFromDistance(Mat dst_map){
 }
 */
 
-Mat TextLineExtractorBinarySeam::getEnergyMapFromDistance(Mat dst_map){
-	Mat energy_map = Mat::zeros(dst_map.size(), CV_32FC1);
-	dst_map.col(0).copyTo(energy_map.col(0));
-	dst_map.row(0).copyTo(energy_map.row(0));
+Mat TextLineExtractorGraySeam::getEnergyMapFromDistance(Mat dst_map) {
+	int last_row = dst_map.rows - 1;
+	int last_col = dst_map.cols - 1;
 
-	int row, col;
-	for (col = 1; col < energy_map.cols; col++)
-		for (row = 1; row < energy_map.rows - 1; row++) {
-			float min_val = minValueOfThreeRows(energy_map, row, col - 1);
-			energy_map.at<float>(row, col) = 2.0*dst_map.at<float>(row, col) + min_val;
+	Mat energy_map_left = Mat::zeros(dst_map.size(), CV_32FC1);
+	dst_map.col(0).copyTo(energy_map_left.col(0));
+	dst_map.row(0).copyTo(energy_map_left.row(0));
+	
+	vector<float> w(3);
+	w[0] = w[2] = 1 / sqrt(2);
+	w[1] = 1;
+
+	for (int col = 1; col < energy_map_left.cols; col++)
+		for (int row = 1; row < energy_map_left.rows - 1; row++) {
+			float min_val = minValueOfThreeRows(energy_map_left, row, col - 1, w);
+			energy_map_left.at<float>(row, col) = 2.0*dst_map.at<float>(row, col) + min_val;
 		}
 
 	// Last Row 
-	row = energy_map.rows - 1;
-	for (int col = 1; col < energy_map.cols; col++){
-		float min_val = min(energy_map.at<float>(row-1, col-1), energy_map.at<float>(row, col - 1));
-		energy_map.at<float>(row, col) = 2.0*dst_map.at<float>(row, col) + min_val;
+	for (int col = 1; col < energy_map_left.cols; col++){
+		float min_val = min(w[0]*energy_map_left.at<float>(last_row-1, col-1), w[1]*energy_map_left.at<float>(last_row, col - 1));
+		energy_map_left.at<float>(last_row, col) = 2.0*dst_map.at<float>(last_row, col) + min_val;
 	}
-	//cout << "Distance: \n " << dst_map << endl;
+
+	Mat energy_map_right = Mat::zeros(dst_map.size(), CV_32FC1);
+	dst_map.col(last_col).copyTo(energy_map_right.col(last_col));
+	dst_map.row(last_row).copyTo(energy_map_right.row(last_row));
+
+	for (int col = last_col - 1; col >= 0; col--)
+		for (int row = last_row - 1; row > 1; row--) {
+			float min_val = minValueOfThreeRows(energy_map_right, row, col + 1, w);
+			energy_map_right.at<float>(row, col) = 2.0*dst_map.at<float>(row, col) + min_val;
+		}
+
+	// Last Row
+	for (int col = last_col - 1; col >= 0; col--) {
+		float min_val = min(w[0] * energy_map_right.at<float>(0, col + 1), w[1] * energy_map_right.at<float>(1, col + 1));
+		energy_map_right.at<float>(0, col) = 2.0*dst_map.at<float>(0, col) + min_val;
+	}
+
+	//cout << "Distance: \n " << dst_map << endl;	
 	//cout << "Enregy: \n " << energy_map << endl;
+
+	Mat energy_map_left_norm = Mat::zeros(dst_map.size(), CV_32FC1);
+	Mat energy_map_right_norm = Mat::zeros(dst_map.size(), CV_32FC1);
+	normalize(energy_map_left, energy_map_left_norm, 0, 1, NORM_MINMAX, CV_32F);
+	normalize(energy_map_right, energy_map_right_norm, 0, 1, NORM_MINMAX, CV_32F);
+	ImageTools::display("Energy map left", energy_map_left_norm);
+	ImageTools::display("Energy map right", energy_map_right_norm);
+
+	Mat energy_map = Mat::zeros(dst_map.size(), CV_32FC1);
+	for (int col = 0; col <= last_col; col++)
+		for (int row = 0; row <= last_row; row++)
+			energy_map.at<float>(row, col) = energy_map_right_norm.at<float>(row, col) + energy_map_left_norm.at<float>(row, col);
+
 	return energy_map;
 }
 
@@ -218,7 +253,7 @@ Mat TextLineExtractorBinarySeam::getEnergyMapFromDistance(Mat dst_map){
 *	EnergyMap.
 */
 
-int TextLineExtractorBinarySeam::getMinRow(Mat EnergyMap){
+int TextLineExtractorGraySeam::getMinRow(Mat EnergyMap){
 	int minRow = 0;
 	float minValue = std::numeric_limits<float>::max();
 	for (int i = 0; i < EnergyMap.rows; i++){
@@ -232,11 +267,12 @@ int TextLineExtractorBinarySeam::getMinRow(Mat EnergyMap){
 }
 
 
-void TextLineExtractorBinarySeam::removeTextLineFromEnergeyMap(Mat energy_map, TextLine& text_line){
+void TextLineExtractorGraySeam::removeTextLineFromEnergyMap(Mat energy_map, TextLine& text_line){
 	double mx, mn;
 	minMaxLoc(energy_map, &mn, &mx);
 	cout << "Boundary: " << text_line.getBoundary().size() << endl;
 	Rect rect = boundingRect(text_line.getBoundary());
+	ImageTools::display(rect);
 	rect.x = 0;
 	rect.width = energy_map.cols-1;
 	cout << "Rect: " << rect << endl;
@@ -244,7 +280,7 @@ void TextLineExtractorBinarySeam::removeTextLineFromEnergeyMap(Mat energy_map, T
 	//cv::fillPoly(energy_map, text_line.getBoundary(), 10000.0f);
 }
 
-void TextLineExtractorBinarySeam::drawDisplay(vector<Point> seam){
+void TextLineExtractorGraySeam::drawDisplay(vector<Point> seam){
 	vector < vector < Point >> polys;
 	
 	polys.push_back(seam);
