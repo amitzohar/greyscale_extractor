@@ -1,0 +1,163 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{EAA7333A-9713-4395-A06B-76F56D778626}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>ManuscriptDLL</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>manuscript</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level1</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MANUSCRIPT_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(OPENCV)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(OPENCV)\x86\vc12\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_ts300d.lib;opencv_world300d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(ProjectDir)*.h"  "$(MANUSCRIPT)\include" /e /y /i
+xcopy "$(OutDir)*.*"  "$(MANUSCRIPT)\lib" /e  /y /i </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MANUSCRIPTDLL_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="BinarizerGlobal.h" />
+    <ClInclude Include="BinarizerKabir.h" />
+    <ClInclude Include="BinarizerNiblack.h" />
+    <ClInclude Include="BinarizerOtsu.h" />
+    <ClInclude Include="BinarizerOtsuGray.h" />
+    <ClInclude Include="ComponentExtractor.h" />
+    <ClInclude Include="ComponentExtractorBinary.h" />
+    <ClInclude Include="ConnectedComponent.h" />
+    <ClInclude Include="Contour.h" />
+    <ClInclude Include="DImage.h" />
+    <ClInclude Include="DistanceTransformOnGray.h" />
+    <ClInclude Include="DistanceTransformSigned.h" />
+    <ClInclude Include="dll_export_import.h" />
+    <ClInclude Include="Feature.h" />
+    <ClInclude Include="FeatureExtractor.h" />
+    <ClInclude Include="stdext.h" />
+    <ClInclude Include="ImageBinarizer.h" />
+    <ClInclude Include="ImageConverter.h" />
+    <ClInclude Include="ImageEnhancer.h" />
+    <ClInclude Include="ImageFeature.h" />
+    <ClInclude Include="ImageFilter.h" />
+    <ClInclude Include="ImageOperator.h" />
+    <ClInclude Include="ImageProjector.h" />
+    <ClInclude Include="ImageTools.h" />
+    <ClInclude Include="ImageTransformation.h" />
+    <ClInclude Include="Metric.h" />
+    <ClInclude Include="PatternSpotter.h" />
+    <ClInclude Include="ProjectionProfile.h" />
+    <ClInclude Include="RunLength.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="StrokeWidthEstimator.h" />
+    <ClInclude Include="StrokeWidthRandom.h" />
+    <ClInclude Include="TextLine.h" />
+    <ClInclude Include="TextLineExtractor.h" />
+    <ClInclude Include="TextLineExtractorGrid.h" />
+    <ClInclude Include="TextLineExtractorProfileSeam.h" />
+    <ClInclude Include="TextLineHeightEstimator.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="BinarizerGlobal.cpp" />
+    <ClCompile Include="BinarizerKabir.cpp" />
+    <ClCompile Include="BinarizerNiblack.cpp" />
+    <ClCompile Include="BinarizerOtsu.cpp" />
+    <ClCompile Include="BinarizerOtsuGray.cpp" />
+    <ClCompile Include="ComponentExtractorBinary.cpp" />
+    <ClCompile Include="ConnectedComponent.cpp" />
+    <ClCompile Include="Contour.cpp" />
+    <ClCompile Include="DImage.cpp" />
+    <ClCompile Include="DistanceTransformOnGray.cpp" />
+    <ClCompile Include="DistanceTransformSigned.cpp" />
+    <ClCompile Include="dllmain.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeader>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</CompileAsManaged>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="ImageTools.cpp" />
+    <ClCompile Include="ManuscriptDLL.cpp" />
+    <ClCompile Include="ProjectionProfile.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="StrokeWidthRandom.cpp" />
+    <ClCompile Include="TextLine.cpp" />
+    <ClCompile Include="TextLineExtractorGrid.cpp" />
+    <ClCompile Include="TextLineExtractorProfileSeam.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
