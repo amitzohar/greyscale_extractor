@@ -272,7 +272,7 @@ void TextLineExtractorGraySeam::removeTextLineFromEnergyMap(Mat energy_map, Text
 	minMaxLoc(energy_map, &mn, &mx);
 	cout << "Boundary: " << text_line.getBoundary().size() << endl;
 	Rect rect = boundingRect(text_line.getBoundary());
-	ImageTools::display(rect);
+	//ImageTools::display(rect);
 	rect.x = 0;
 	rect.width = energy_map.cols-1;
 	cout << "Rect: " << rect << endl;
