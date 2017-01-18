@@ -6,6 +6,7 @@
 #include "TextLineExtractorGraySeam.h"
 #include "DistanceTransformSigned.h"
 #include "ComponentExtractorBinary.h"
+#include "BinarizerGlobal.h"
 #include "TextLine.h"
 
 using namespace cv;
@@ -40,17 +41,10 @@ TextLineExtractorGraySeam::~TextLineExtractorGraySeam(){
 * Notes:
 *	Must first call setImage with binary image.
 */
-
 void TextLineExtractorGraySeam::extract(vector<TextLine*>& text_lines){
-	ComponentExtractorBinary component_extractor;
 	vector<ConnectedComponent*> component_list;
 
-	// Extarct the connected components from the binary image 
-	DImage* negative = _image->negate();
-	negative->extractComponents(component_extractor, component_list);
-	DistanceTransformSigned transform(_image);
-	transform.setComponents(&component_list);
-	DImage* dist_map = transform.transform();
+	DImage* dist_map = calculateDistanceMap(component_list);
 
 	Mat vis = Mat(dist_map->getMat().size(), CV_32FC1);
 	normalize(dist_map->getMat(), vis, 0, 1, NORM_MINMAX, CV_32F);
@@ -59,24 +53,44 @@ void TextLineExtractorGraySeam::extract(vector<TextLine*>& text_lines){
 	Mat energy_map = getEnergyMapFromDistance(dist_map->getMat());
 	normalize(energy_map, vis, 0, 1, NORM_MINMAX, CV_32F);
 	ImageTools::display(" Energy Map ", vis);
-	//return;
 	
 	for (int i = 0; i <= theRows; i++) {
 		vector<cv::Point> seam = getNextSeam(energy_map);
 		drawDisplay(seam);
 		waitKey(0);
-		vector<ConnectedComponent*> seam_components = getSeamComponents(seam, component_list);
-		cout << "Component List: " << component_list.size() << " Seam Components: " << seam_components.size() << endl;
-		if (seam_components.size() > 0){
-			TextLine* text_line = new TextLine(_image->getMat());
-			text_line->setLineBoundary(seam_components);
-			text_lines.push_back(text_line);
-			stdext::subtract(component_list, seam_components);
-			removeTextLineFromEnergyMap(energy_map, *text_line);
-			normalize(energy_map, vis, 0, 1, NORM_MINMAX, CV_32F);
-			//ImageTools::displayFresh(" Energy Map ", vis);
-		}
+		//vector<ConnectedComponent*> seam_components = getSeamComponents(seam, component_list);
+		//cout << "Component List: " << component_list.size() << " Seam Components: " << seam_components.size() << endl;
+		//if (seam_components.size() > 0){
+			//TextLine* text_line = new TextLine(_image->getMat());
+			//text_line->setLineBoundary(seam_components);
+			//text_lines.push_back(text_line);
+			//stdext::subtract(component_list, seam_components);
+			//removeTextLineFromEnergyMap(energy_map, *text_line);
+
+		 
+		normalize(energy_map, vis, 0, 1, NORM_MINMAX, CV_32F);
+		ImageTools::displayFresh(" Energy Map ", vis);
+		//}
 	}
+}
+
+/**
+ * calculateDistanceMap - calculate the distance map of the image by binarizing it first.
+ * Input: 
+ *    component_list - The components of the distance map will be returned here
+ */
+DImage* TextLineExtractorGraySeam::calculateDistanceMap(vector<ConnectedComponent*> &component_list) {
+	ComponentExtractorBinary component_extractor;
+
+	BinarizerGlobal binarizer(128);
+	DImage* binary = _image->binarize(binarizer);
+	binary->display(" Binary Image ...");
+
+	DImage* negative = binary->negate();
+	negative->extractComponents(component_extractor, component_list);
+	DistanceTransformSigned transform(binary);
+	transform.setComponents(&component_list);
+	return transform.transform();
 }
 
 vector<cv::Point> TextLineExtractorGraySeam::getNextSeam(Mat energy_map){
@@ -105,8 +119,6 @@ vector<cv::Point> TextLineExtractorGraySeam::getNextSeam(Mat energy_map){
 *   seam_component_list - list of all components that intersect seam.
 *	seam - list of points that represents a seam (line) passing through the Heat Map minimum.
 */
-
-
 vector<ConnectedComponent*> TextLineExtractorGraySeam::getSeamComponents(vector<Point> seam, vector<ConnectedComponent*> &component_list){
 	vector<ConnectedComponent*> seam_components;
 	vector<ConnectedComponent*> rect_components;
@@ -147,9 +159,6 @@ int TextLineExtractorGraySeam::getMinRow(Mat energy_map, int row, int col, int r
 	return min_row;
 }
 
-/*
-*
-*/
 
 vector<Point> TextLineExtractorGraySeam::getSeam(Mat energy_map, Point start){
 	vector<Point> seam;
@@ -161,33 +170,6 @@ vector<Point> TextLineExtractorGraySeam::getSeam(Mat energy_map, Point start){
 	}
 	return seam;
 }
-
-
-/**
-* getEnergyMapFromDistance - Create Energy Map From Signed Distance Map.
-* Input:
-*	dstMap - Distance Map built by SignedDistanceTransform.transform
-*	energyMap- Energy map of image, (Built from Signed Distance Transform).
-*/
-/*
-Mat TextLineExtractorBinarySeam::getEnergyMapFromDistance(Mat dst_map){
-	Mat energy_map = Mat::zeros(dst_map.size(), CV_32FC1);
-	copyMakeBorder(dst_map, dst_map, 2, 2, 2, 2, BORDER_REPLICATE);//BORDER_CONSTANT, Scalar(255)
-
-	for (int j = 2; j < energy_map.cols - 2; j++)
-		for (int i = 2; i < energy_map.rows - 2; i++){
-			float before = dst_map.at<float>(i, j);
-			float min_val = min(energy_map.at<float>(i - 2, j - 1),
-				min(energy_map.at<float>(i - 1, j - 1), min(energy_map.at<float>(i, j - 1),
-				min(energy_map.at<float>(i + 1, j - 1),	energy_map.at<float>(i + 2, j - 1)))));
-			float val = 2.0f * dst_map.at<float>(i, j) + min_val;
-			energy_map.at<float>(i, j) = val;
-		}
-	Rect roi(2, 2, energy_map.cols - 4, energy_map.rows - 4);
-	//return energy_map(roi);
-	return energy_map;
-}
-*/
 
 Mat TextLineExtractorGraySeam::getEnergyMapFromDistance(Mat dst_map) {
 	int last_row = dst_map.rows - 1;

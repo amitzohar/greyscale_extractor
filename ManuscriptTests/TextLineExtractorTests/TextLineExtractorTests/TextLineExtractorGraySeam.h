@@ -25,6 +25,7 @@ public:
 
 private:
 
+	DImage* calculateDistanceMap(vector<ConnectedComponent*> &component_list);
 	Mat getEnergyMapFromDistance(Mat dst_map);
 	int getMinRow(Mat energy_map, int row, int col, int range);
 	vector<cv::Point> getSeam(Mat energy_map, cv::Point init);
