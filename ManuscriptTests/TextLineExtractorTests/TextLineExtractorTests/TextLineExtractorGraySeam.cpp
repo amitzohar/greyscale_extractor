@@ -57,9 +57,9 @@ void TextLineExtractorGraySeam::extract(vector<TextLine*>& text_lines){
 	for (int i = 0; i <= theRows; i++) {
 		vector<cv::Point> seam = getNextSeam(energy_map);
 		drawDisplay(seam);
-		vector<cv::Point> upperSeam = getUpperSeam(dist_map->getMat(), seam);
+		vector<cv::Point> upperSeam = getUpperSeam(energy_map, seam);
 		drawDisplay(upperSeam);
-		vector<cv::Point> lowerSeam = getLowerSeam(dist_map->getMat(), seam);
+		vector<cv::Point> lowerSeam = getLowerSeam(energy_map, seam);
 		drawDisplay(lowerSeam);
 		waitKey(0);
 
@@ -104,7 +104,7 @@ vector<cv::Point> TextLineExtractorGraySeam::getUpperSeam(Mat energy_map,vector<
 	for (int i = 0; i < medSeam.size(); i++){
 		int j = medSeam.at(i).y;
 		int ip = medSeam.at(i).x;
-		while ((j >= 1) && (energy_map.at<float>(j, ip) < energy_map.at<float>(j - 1, ip))){
+		while ((j >= 1) && (energy_map.at<float>(j, ip) <= energy_map.at<float>(j - 1, ip))){
 			j--;
 		}
 		ret.push_back(Point(medSeam.at(i).x, j));
