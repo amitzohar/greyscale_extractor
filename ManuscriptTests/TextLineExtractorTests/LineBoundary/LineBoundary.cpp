@@ -23,7 +23,7 @@ int main(int argc, char* argv[]){
 		}
 	} comp;
 
-	mat = imread("D:/Datasets/Images/printed_eng.jpg");
+	mat = imread("C:/Images/G67CU.png");
 	DImage* di = new DImage(mat);
 	di->display("DImage Test ");
 

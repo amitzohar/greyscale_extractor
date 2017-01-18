@@ -57,7 +57,12 @@ void TextLineExtractorGraySeam::extract(vector<TextLine*>& text_lines){
 	for (int i = 0; i <= theRows; i++) {
 		vector<cv::Point> seam = getNextSeam(energy_map);
 		drawDisplay(seam);
+		vector<cv::Point> upperSeam = getUpperSeam(dist_map->getMat(), seam);
+		drawDisplay(upperSeam);
+		vector<cv::Point> lowerSeam = getLowerSeam(dist_map->getMat(), seam);
+		drawDisplay(lowerSeam);
 		waitKey(0);
+
 		//vector<ConnectedComponent*> seam_components = getSeamComponents(seam, component_list);
 		//cout << "Component List: " << component_list.size() << " Seam Components: " << seam_components.size() << endl;
 		//if (seam_components.size() > 0){
@@ -92,6 +97,33 @@ DImage* TextLineExtractorGraySeam::calculateDistanceMap(vector<ConnectedComponen
 	transform.setComponents(&component_list);
 	return transform.transform();
 }
+
+
+vector<cv::Point> TextLineExtractorGraySeam::getUpperSeam(Mat energy_map,vector<cv::Point> medSeam){
+	vector<cv::Point> ret;
+	for (int i = 0; i < medSeam.size(); i++){
+		int j = medSeam.at(i).y;
+		int ip = medSeam.at(i).x;
+		while ((j >= 1) && (energy_map.at<float>(j, ip) < energy_map.at<float>(j - 1, ip))){
+			j--;
+		}
+		ret.push_back(Point(medSeam.at(i).x, j));
+	}
+	return ret;
+}
+
+vector<cv::Point> TextLineExtractorGraySeam::getLowerSeam(Mat energy_map, vector<cv::Point> medSeam){
+	vector<cv::Point> ret;
+	for (int i = 0; i < medSeam.size(); i++){
+		int j = medSeam.at(i).y;
+		while ((j < energy_map.cols) && (energy_map.at<float>(j, i) < energy_map.at<float>(j + 1, i))){
+			j++;
+		}
+		ret.push_back(Point(j, medSeam.at(i).y));
+	}
+	return ret;
+}
+
 
 vector<cv::Point> TextLineExtractorGraySeam::getNextSeam(Mat energy_map){
 	Point min_pt;
