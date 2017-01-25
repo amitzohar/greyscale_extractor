@@ -14,7 +14,7 @@ using namespace cv;
 int main(int argc, char* argv[]){
 	Mat mat;
 
-	mat = imread("C://Images//to_beria.jpg");
+	mat = imread("C://Images//docset-811_doc-812_img.jpg");
 	//mat = imread("D:/Datasets/Images/printed1_eng.jpg");
 	//mat = imread("D:/Datasets/Images/ellipse.jpg");
 	DImage* di = new DImage(mat);
