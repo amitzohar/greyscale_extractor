@@ -47,7 +47,7 @@ void TextLineExtractorGraySeam::extract(vector<TextLine*>& text_lines){
 	DImage* dist_map = calculateDistanceMap(component_list);
 
 	Mat vis = Mat(dist_map->getMat().size(), CV_32FC1);
-	rowHeight = vis.cols/theRows;
+	rowHeight = vis.rows/theRows;
 	normalize(dist_map->getMat(), vis, 0, 1, NORM_MINMAX, CV_32F);
 	ImageTools::display(" Distance ", vis);
 
