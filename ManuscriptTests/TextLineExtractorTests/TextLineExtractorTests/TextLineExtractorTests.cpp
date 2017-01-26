@@ -14,7 +14,7 @@ using namespace cv;
 int main(int argc, char* argv[]){
 	Mat mat;
 
-	mat = imread("C://Images//docset-811_doc-812_img.jpg");
+	mat = imread("C:\\Users\\Study\\Courses\\images\\printed_01.png");
 	//mat = imread("D:/Datasets/Images/printed1_eng.jpg");
 	//mat = imread("D:/Datasets/Images/ellipse.jpg");
 	DImage* di = new DImage(mat);
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]){
 	*/
 	vector<TextLine*> text_lines;
 
-	TextLineExtractorGraySeam textLineExtractor(10);
+	TextLineExtractorGraySeam textLineExtractor(4);
 	gry->extractTextLines(textLineExtractor, text_lines);
 	
 	cout << "Text Lines " << text_lines.size() << endl;

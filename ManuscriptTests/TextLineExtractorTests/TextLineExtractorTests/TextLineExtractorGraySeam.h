@@ -10,11 +10,8 @@
 
 
 class TextLineExtractorGraySeam : public TextLineExtractor {
-	/* Class variables declaration */
-	int theRows;
-	double rowHeight;
-	int _border;
-	int _diverge;
+	int m_rows;
+	double m_rowHeight;
 
 public:
 	//Constructor
@@ -23,9 +20,9 @@ public:
 
 	//Overridden methods
 	void extract(std::vector<TextLine*>& text_lies);
-	//int removeLine(Mat energy_map, vector<cv::Point> upperSeam, vector<cv::Point> lowerSeam);
 
 private:
+	int removeLine(Mat energy_map, vector<cv::Point> upperSeam, vector<cv::Point> lowerSeam);
 	DImage* calculateDistanceMap(vector<ConnectedComponent*> &component_list);
 	Mat getEnergyMapFromDistance(Mat dst_map);
 	int getMinRow(Mat energy_map, int row, int col, int range);
