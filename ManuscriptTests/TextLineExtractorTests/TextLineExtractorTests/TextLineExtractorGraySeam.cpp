@@ -24,8 +24,7 @@ struct {
 * Input:
 *	rows- amount of rows to extract.
 */
-TextLineExtractorGraySeam::TextLineExtractorGraySeam(int rows){
-	theRows = rows;
+TextLineExtractorGraySeam::TextLineExtractorGraySeam(int rows) : m_rows(rows), m_rowHeight(0) {
 }
 
 /**
@@ -47,7 +46,7 @@ void TextLineExtractorGraySeam::extract(vector<TextLine*>& text_lines){
 	DImage* dist_map = calculateDistanceMap(component_list);
 
 	Mat vis = Mat(dist_map->getMat().size(), CV_32FC1);
-	rowHeight = vis.rows/theRows;
+	m_rowHeight = vis.rows / m_rows;
 	normalize(dist_map->getMat(), vis, 0, 1, NORM_MINMAX, CV_32F);
 	ImageTools::display(" Distance ", vis);
 
@@ -55,29 +54,19 @@ void TextLineExtractorGraySeam::extract(vector<TextLine*>& text_lines){
 	normalize(energy_map, vis, 0, 1, NORM_MINMAX, CV_32F);
 	ImageTools::display(" Energy Map ", vis);
 	
-	for (int i = 0; i <= theRows; i++) {
+	for (int i = 0; i < m_rows; i++) {
 		vector<cv::Point> seam = getNextSeam(energy_map);
+
 		drawDisplay(seam);
 		vector<cv::Point> upperSeam = getUpperSeam(energy_map, seam);
 		drawDisplay(upperSeam);
 		vector<cv::Point> lowerSeam = getLowerSeam(energy_map, seam);
 		drawDisplay(lowerSeam);
-		//removeLine(energy_map, upperSeam, lowerSeam);
+		removeLine(energy_map, upperSeam, lowerSeam);
 		waitKey(0);
-
-		//vector<ConnectedComponent*> seam_components = getSeamComponents(seam, component_list);
-		//cout << "Component List: " << component_list.size() << " Seam Components: " << seam_components.size() << endl;
-		//if (seam_components.size() > 0){
-			//TextLine* text_line = new TextLine(_image->getMat());
-			//text_line->setLineBoundary(seam_components);
-			//text_lines.push_back(text_line);
-			//stdext::subtract(component_list, seam_components);
-			//removeTextLineFromEnergyMap(energy_map, *text_line);
-
 		 
 		normalize(energy_map, vis, 0, 1, NORM_MINMAX, CV_32F);
 		ImageTools::displayFresh(" Energy Map ", vis);
-		//}
 	}
 }
 
@@ -100,68 +89,119 @@ DImage* TextLineExtractorGraySeam::calculateDistanceMap(vector<ConnectedComponen
 	return transform.transform();
 }
 
-
-vector<cv::Point> TextLineExtractorGraySeam::getUpperSeam(Mat energy_map,vector<cv::Point> medSeam){
+vector<cv::Point> TextLineExtractorGraySeam::getLowerSeam(Mat energy_map, vector<cv::Point> medSeam){
 	vector<cv::Point> ret;
-	int min = 0;
+	int segments = 4;
+	int max = 0;
+	vector<cv::Point> avgSeams[4];
+	int buffer = energy_map.cols / 4;
+	Point startingPoints[4];
 	for (int i = 0; i < medSeam.size(); i++){
 		int j = medSeam.at(i).y;
 		int ip = medSeam.at(i).x;
 		int delta = 0, finalDelta = 0;
 
-		while (delta<rowHeight){
-			if (energy_map.at<float>(j - delta, ip) > min){
+		while (delta < m_rowHeight / 2 && j + delta < energy_map.rows){
+			if (energy_map.at<float>(j + delta, ip) > max){
 				finalDelta = delta;
-				min = energy_map.at<float>(j - delta, ip);
+				max = energy_map.at<float>(j + delta, ip);
 			}
 			delta++;
 		}
+		printf("%d,%d\n", medSeam.at(i).x, j + finalDelta);
 		ret.push_back(Point(medSeam.at(i).x, j + finalDelta));
 	}
-	return ret;
+
+	Mat neg_energy_map = Mat::zeros(energy_map.size(), CV_32FC1);
+	energy_map.copyTo(neg_energy_map);
+	for (int i = 0; i < neg_energy_map.cols; i++){
+		for (int j = 0; j < neg_energy_map.rows; j++){
+			neg_energy_map.col(i).row(j) = -neg_energy_map.col(i).row(j);
+		}
+	}
+
+	for (int i = 0; i < 4; i++){
+		startingPoints[i] = Point(buffer*i, ret.at(buffer*i).y);
+		avgSeams[i] = getSeam(neg_energy_map, startingPoints[i]);
+	}
+	vector<cv::Point> final;
+	for (int i = 0; i < avgSeams[0].size(); i++){
+		int avg = avgSeams[0].at(i).y + avgSeams[1].at(i).y +
+			avgSeams[2].at(i).y + avgSeams[3].at(i).y;
+		avg /= 4;
+		final.push_back(Point(avgSeams[0].at(i).x, avg));
+	}
+
+	return final;
 }
 
-vector<cv::Point> TextLineExtractorGraySeam::getLowerSeam(Mat energy_map, vector<cv::Point> medSeam){
+vector<cv::Point> TextLineExtractorGraySeam::getUpperSeam(Mat energy_map, vector<cv::Point> medSeam){
 	vector<cv::Point> ret;
-	int min = 0;
+	int segments = 4;
+	int max = 0;
+	vector<cv::Point> avgSeams[4];
+	int buffer = energy_map.cols / 4;
+	Point startingPoints[4];
+
 	for (int i = 0; i < medSeam.size(); i++){
 		int j = medSeam.at(i).y;
 		int ip = medSeam.at(i).x;
 		int delta = 0, finalDelta = 0;
 
-		while (-delta<rowHeight){
-			if (energy_map.at<float>(j - delta, ip) > min){
+		while (delta < m_rowHeight / 2 && j - delta >= 0){
+			if (energy_map.at<float>(j - delta, ip) > max){
 				finalDelta = delta;
-				min = energy_map.at<float>(j - delta, ip);
+				max = energy_map.at<float>(j - delta, ip);
 			}
-			delta--;
+			delta++;
 		}
-		ret.push_back(Point(medSeam.at(i).x, j + finalDelta));
+		ret.push_back(Point(medSeam.at(i).x, j - finalDelta));
 	}
-	return ret;
+
+	Mat neg_energy_map = Mat::zeros(energy_map.size(), CV_32FC1);
+	energy_map.copyTo(neg_energy_map);
+	for (int i = 0; i < neg_energy_map.cols; i++){
+		for (int j = 0; j < neg_energy_map.rows; j++){
+			neg_energy_map.col(i).row(j) = -neg_energy_map.col(i).row(j);
+		}
+	}
+
+	for (int i = 0; i < 4; i++){
+		startingPoints[i] = Point(buffer*i, ret.at(buffer*i).y);
+		avgSeams[i] = getSeam(neg_energy_map, startingPoints[i]);
+	}
+	vector<cv::Point> final;
+	for (int i = 0; i < avgSeams[0].size(); i++){
+		int avg = avgSeams[0].at(i).y + avgSeams[1].at(i).y +
+			avgSeams[2].at(i).y + avgSeams[3].at(i).y;
+		avg /= 4;
+		final.push_back(Point(avgSeams[0].at(i).x, avg));
+	}
+
+	return final;
 }
 
-//int removeLine(Mat energy_map, vector<cv::Point> upperSeam, vector<cv::Point> lowerSeam){
-//	for (int i = 0; i < upperSeam.size(); i++){
-//		for (int j = upperSeam.at(i).y; j <= lowerSeam.at(i).y; j++){
-//			energy_map.at<float>(i,j)=0;
-//		}
-//	}
-//	return 0;
-//}
+int TextLineExtractorGraySeam::removeLine(Mat energy_map, vector<cv::Point> upperSeam, vector<cv::Point> lowerSeam){
+	double mx, mn;
+	minMaxLoc(energy_map, &mn, &mx);
+	for (int col = 0; col < upperSeam.size(); col++){
+		for (int row = upperSeam.at(col).y; row <= lowerSeam.at(col).y; row++) {
+			energy_map.at<float>(row, col) = mx;
+		}
+	}
+	return 0;
+}
+
 vector<cv::Point> TextLineExtractorGraySeam::getNextSeam(Mat energy_map){
 	Point min_pt;
 	double min_val, max_val;
-	//cout << "Col: " << energy_map.col(energy_map.cols - 2) << endl ;
 	minMaxLoc(energy_map.col(energy_map.cols - 2), &min_val, &max_val, &min_pt);
 	min_pt.x = energy_map.cols - 2;
 
-	//cout << "Min: " << min_pt << " MinVal: " << min_val << " MaxVal: " << max_val << endl;
 	vector<Point> seam;
 	int row = min_pt.y;
 	seam.push_back(min_pt);
 	for (int col = min_pt.x; col > 0; col--){
-		//cout << "Row: " << row << " Col: " << col << endl;
 		row = getMinRow(energy_map, row, col, 1);
 		seam.push_back(Point(col, row));
 	}
@@ -215,12 +255,15 @@ int TextLineExtractorGraySeam::getMinRow(Mat energy_map, int row, int col, int r
 	return min_row;
 }
 
-
 vector<Point> TextLineExtractorGraySeam::getSeam(Mat energy_map, Point start){
 	vector<Point> seam;
 	int row = start.y;
-	seam.push_back(start);
+	int row1 = start.y;
 	for (int col = start.x; col > 0 ; col--){
+		row = getMinRow(energy_map, row, col, 1);
+		seam.push_back(Point(col, row));
+	}
+	for (int col = start.x; col < energy_map.cols; col++){
 		row = getMinRow(energy_map, row, col, 1);
 		seam.push_back(Point(col, row));
 	}
