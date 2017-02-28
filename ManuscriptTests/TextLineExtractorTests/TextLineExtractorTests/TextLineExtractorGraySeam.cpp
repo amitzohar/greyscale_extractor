@@ -53,20 +53,15 @@ void TextLineExtractorGraySeam::extract(vector<TextLine*>& text_lines){
 	Mat energy_map = getEnergyMapFromDistance(dist_map->getMat());
 	normalize(energy_map, vis, 0, 1, NORM_MINMAX, CV_32F);
 	ImageTools::display(" Energy Map ", vis);
-	
 	for (int i = 0; i < m_rows; i++) {
 		vector<cv::Point> seam = getNextSeam(energy_map);
-
-		drawDisplay(seam);
 		vector<cv::Point> upperSeam = getUpperSeam(energy_map, seam);
-		drawDisplay(upperSeam);
-		vector<cv::Point> lowerSeam = getLowerSeam(energy_map, seam);
-		drawDisplay(lowerSeam);
-		removeLine(energy_map, upperSeam, lowerSeam);
-		waitKey(0);
-		 
+		vector<cv::Point> lowerSeam = getLowerSeam(energy_map, seam);		 
 		normalize(energy_map, vis, 0, 1, NORM_MINMAX, CV_32F);
-		ImageTools::displayFresh(" Energy Map ", vis);
+		TextLine line = TextLine();
+		line.setLowerBound(&lowerSeam);
+		line.setUpperBound(&upperSeam);
+		text_lines.push_back(&line);
 	}
 }
 
