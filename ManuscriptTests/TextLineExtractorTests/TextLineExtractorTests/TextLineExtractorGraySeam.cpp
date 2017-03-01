@@ -18,6 +18,13 @@ struct {
 	}
 } comp;
 
+struct {
+	bool operator()(Point a, Point b)
+	{
+		return a.x < b.x;
+	}
+} customLess;
+
 const unsigned int TextLineExtractorGraySeam::NUM_OF_AVG_PTS = 4;
 
 
@@ -126,7 +133,7 @@ vector<cv::Point> TextLineExtractorGraySeam::getLowerSeam(Mat energy_map, Mat ne
 		}
 		final.push_back(Point(avgSeams[0].at(i).x, sum / NUM_OF_AVG_PTS));
 	}
-
+	std::sort(final.begin(), final.end(), customLess);
 	return final;
 }
 
@@ -163,7 +170,7 @@ vector<cv::Point> TextLineExtractorGraySeam::getUpperSeam(Mat energy_map, Mat ne
 		}
 		final.push_back(Point(avgSeams[0].at(i).x, sum / NUM_OF_AVG_PTS));
 	}
-
+	std::sort(final.begin(), final.end(), customLess);
 	return final;
 }
 
