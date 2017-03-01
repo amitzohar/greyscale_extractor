@@ -27,7 +27,6 @@ private:
 	Mat getEnergyMapFromDistance(Mat dst_map);
 	Mat negateEnergyMap(Mat energy_map);
 	int getMinRow(Mat energy_map, int row, int col, int range);
-	int TextLineExtractorGraySeam::calculateLineHeight(vector<cv::Point> lowerSeam, vector<cv::Point> upperSeam);
 	vector<cv::Point> getSeam(Mat energy_map, cv::Point init);
 	vector<cv::Point> getNextSeam(Mat energy_map);
 	vector<cv::Point> getUpperSeam(Mat energy_map, Mat neg_energy_map, vector<cv::Point> medSeam);
