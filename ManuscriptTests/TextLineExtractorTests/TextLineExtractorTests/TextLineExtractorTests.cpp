@@ -14,8 +14,8 @@ using namespace cv;
 int main(int argc, char* argv[]){
 	Mat mat;
 
-	mat = imread("C:\\Images\\G67CU.png");
-	//mat = imread("C:\\Users\\Study\\Courses\\images\\printed_04.jpg");
+	//mat = imread("C:\\Images\\G67CU.png");
+	mat = imread("C:\\Users\\Study\\Courses\\images\\printed_04.jpg");
 	DImage* di = new DImage(mat);
 	
 	DImage* gry = di->convert(CV_8U);

@@ -33,7 +33,6 @@ private:
 	vector<cv::Point> getUpperSeam(Mat energy_map, Mat neg_energy_map, vector<cv::Point> medSeam);
 	vector<cv::Point> getLowerSeam(Mat energy_map, Mat neg_energy_map, vector<cv::Point> medSeam);
 	vector<ConnectedComponent*> getSeamComponents(vector<Point> seam, vector<ConnectedComponent*> &component_list);
-	void removeTextLineFromEnergyMap(Mat energy_map, TextLine& text_line);
 	int getMinRow(Mat EnergyMap);
 	void drawDisplay(vector<Point> seam);
 	float minValueOfThreeRows(cv::Mat img, int row, int col, vector<float> w){
