@@ -25,7 +25,8 @@ struct {
 	}
 } customLess;
 
-const unsigned int TextLineExtractorGraySeam::NUM_OF_AVG_PTS = 4;
+const unsigned int TextLineExtractorGraySeam::NUM_OF_AVG_PTS = 100
+;
 
 
 /**
@@ -58,7 +59,7 @@ void TextLineExtractorGraySeam::extract(vector<TextLine*>& text_lines){
 	m_rowHeight = vis.rows / m_rows;
 	normalize(dist_map->getMat(), vis, 0, 1, NORM_MINMAX, CV_32F);
 	ImageTools::display(" Distance ", vis);
-
+	
 	Mat energy_map = getEnergyMapFromDistance(dist_map->getMat());
 	normalize(energy_map, vis, 0, 1, NORM_MINMAX, CV_32F);
 	ImageTools::display(" Energy Map ", vis);
@@ -67,6 +68,15 @@ void TextLineExtractorGraySeam::extract(vector<TextLine*>& text_lines){
 		vector<cv::Point> seam = getNextSeam(energy_map);
 		vector<cv::Point> upperSeam = getUpperSeam(energy_map, neg_energy_map, seam);
 		vector<cv::Point> lowerSeam = getLowerSeam(energy_map, neg_energy_map, seam);
+		int height = 0;
+		height = calculateLineHeight(lowerSeam, upperSeam);
+		while (height < m_rowHeight*0.5){
+			removeLine(energy_map, upperSeam, lowerSeam);
+			upperSeam = getUpperSeam(energy_map, neg_energy_map, seam);
+			lowerSeam = getLowerSeam(energy_map, neg_energy_map, seam);
+			seam = getNextSeam(energy_map);
+			height = calculateLineHeight(lowerSeam, upperSeam);
+		}
 		drawDisplay(seam);
 		drawDisplay(upperSeam);
 		drawDisplay(lowerSeam);
@@ -76,8 +86,8 @@ void TextLineExtractorGraySeam::extract(vector<TextLine*>& text_lines){
 		line.setUpperBound(&upperSeam);
 		removeLine(energy_map, upperSeam, lowerSeam);
 		ImageTools::displayFresh("Energy map", energy_map);
-		waitKey(0);
 		text_lines.push_back(&line);
+		waitKey(0);
 	}
 }
 
@@ -98,6 +108,18 @@ DImage* TextLineExtractorGraySeam::calculateDistanceMap(vector<ConnectedComponen
 	DistanceTransformSigned transform(binary);
 	transform.setComponents(&component_list);
 	return transform.transform();
+}
+
+int TextLineExtractorGraySeam::calculateLineHeight(vector<cv::Point> lowerSeam, vector<cv::Point> upperSeam){
+	int avgHeight = -1;
+	int sumHeight = 0;
+	if (lowerSeam.size() == upperSeam.size()){
+		for (int i = 0; i < lowerSeam.size(); i++){
+			sumHeight += lowerSeam.at(i).y - upperSeam.at(i).y;
+		}
+		avgHeight = sumHeight / lowerSeam.size();
+	}
+	return avgHeight;
 }
 
 vector<cv::Point> TextLineExtractorGraySeam::getLowerSeam(Mat energy_map, Mat neg_energy_map, vector<cv::Point> medSeam) {
